@@ -1,0 +1,13 @@
+{
+  "name": "d08-ithelp-team-crawler",
+  "version": "1.0.0",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {},
+  "author": "Louis",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "cheerio": "^1.0.0-rc.12"
+  }
+}
