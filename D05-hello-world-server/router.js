@@ -14,5 +14,9 @@ router.post('/', function(req, res) {
 	});
 });
 
+router.get('/hola', function(req, res) {
+	return res.json({ hola: "world" });
+});
+
 export default router;
 
