@@ -1,0 +1,2 @@
+include:
+  - local: D05-hello-world-server/.gitlab-ci.yml
