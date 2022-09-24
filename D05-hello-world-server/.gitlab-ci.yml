@@ -1,0 +1,36 @@
+stages:
+  - deploy
+
+deploy-dev:
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "D09/gitlab-ci-build-cache"'
+  image: docker
+  services:
+    - docker:dind
+
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - mkdir -p ~/.ssh/
+    - echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+
+  script:
+    # Build docker image
+    - cd D05-hello-world-server
+    - docker pull ${CI_REGISTRY_IMAGE}/hello-world-server || true
+    - docker build  -t ${CI_REGISTRY_IMAGE}/hello-world-server  .
+        --cache-from ${CI_REGISTRY_IMAGE}/hello-world-server
+    - docker images
+    - docker push ${CI_REGISTRY_IMAGE}/hello-world-server
+
+    # Deploy
+    - ssh  -tt  -o StrictHostKeyChecking=no  ${SERVER_USER}@${SERVER_HOSTNAME} "
+        sudo su - -c '
+          docker pull ${CI_REGISTRY_IMAGE}/hello-world-server &&
+          docker stop my-hello-world-server &&
+          docker rm my-hello-world-server &&
+          docker run  --detach  --publish=3000:3000  --name=my-hello-world-server  ${CI_REGISTRY_IMAGE}/hello-world-server
+        '
+      "
+
