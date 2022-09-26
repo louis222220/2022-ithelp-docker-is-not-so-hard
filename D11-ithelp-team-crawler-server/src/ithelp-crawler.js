@@ -1,5 +1,13 @@
 import axios from "axios";
 import * as cheerio from 'cheerio';
+import dayjs from "dayjs"
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+const taiwanTz = 'Asia/Taipei';
 
 const client = axios.create({
 	baseURL: 'https://ithelp.ithome.com.tw/2022ironman',
@@ -20,17 +28,25 @@ export async function getAllTeamId(url) {
 	return teamIds;
 }
 
+function getImageUrlFromIthelp(url) {
+	const urlWithoutQuery = url.split('?')[0];
+	const urlWithPngExtension = `${urlWithoutQuery}.png`;
+	return urlWithPngExtension;
+}
+
 export async function getTeamMembers(teamId) {
 	const response = await client(`signup/team/${teamId}`);
 	const $ = cheerio.load(response.data);
 	const memberDataItems = $('body > section > div > div:nth-child(4) > div').map((_, element) => {
 		const seriesTitle = $(element).find('div.col-md-10 > a > div').text();
 		const authorName = $(element).find('div.col-md-2 > div.name').text();
-		const ironmanPageLink = $(element).find('div.col-md-10 > a').attr('href');
+		const originalAuthorImageUrl = $(element).find('div.col-md-2 > div.list-photo > a > img').attr('src');
+		const ironmanPageUrl = $(element).find('div.col-md-10 > a').attr('href');
 		return {
 			seriesTitle,
 			authorName,
-			ironmanPageLink,
+			ironmanPageUrl,
+			originalAuthorImageUrl,
 		}
 	}).get();
 	return memberDataItems;
@@ -42,7 +58,11 @@ export async function getLatestPostData(ironmanPageLink) {
 
 	const postLengthSelector = 'body > div.container.index-top > div > div > div.board.leftside.profile-main > div.ir-profile-content > div.ir-profile-series > div.qa-list__info.qa-list__info--ironman.subscription-group > span:nth-child(2)';
 	const postLengthString = $(postLengthSelector).text();
-	const postLength = parseInt(postLengthString.match(/^共 (\d+)/)[1]);
+	const matches = postLengthString.match(/^共 (\d+)/);
+	if (matches == null || matches.length < 2) {
+		return null
+	}
+	const postLength = parseInt(matches[1]);
 	if (postLength == 0) {
 		return null;
 	}
@@ -58,10 +78,13 @@ export async function getLatestPostData(ironmanPageLink) {
 
 	if (isLastPage) {
 		const lastPost = $('body > div.container.index-top > div > div > div.board.leftside.profile-main > div.ir-profile-content > div:nth-last-child(1) > div.profile-list__content');
+		const latestPostedAt = lastPost.find('div.qa-list__info > a.qa-list__info-time').attr('title');
 		const lastPostData = {
-			title: (lastPost.find('h3 > a').text() ?? '').trim(),
-			url: (lastPost.find('h3 > a').attr('href') ?? '').trim(),
-			postedAt: lastPost.find('div.qa-list__info > a.qa-list__info-time').attr('title'),
+			latestPostTitle: (lastPost.find('h3 > a').text() ?? '').trim(),
+			latestPostUrl: (lastPost.find('h3 > a').attr('href') ?? '').trim(),
+			latestPostedAt: dayjs.tz(latestPostedAt, taiwanTz).toISOString(),
+			postLength,
+			participationDays,
 		};
 		return lastPostData;
 	}
@@ -69,4 +92,22 @@ export async function getLatestPostData(ironmanPageLink) {
 		const lastPage = Math.ceil(postLength / 10);
 		return await getLatestPostData(`${ironmanPageLink}?page=${lastPage}`)
 	}
+}
+
+/**
+ * @param {number} teamId
+ * @return {Promise<Array>}
+ */
+export async function getMembersWithPostInfo(teamId) {
+	const members = await getTeamMembers(teamId);
+	const promisesToGetPostInfo = members.map(async (member) => {
+		const latestPostData = await getLatestPostData(member.ironmanPageUrl);
+		return {
+			teamId: parseInt(teamId),
+			...member,
+			...latestPostData,
+		};
+	});
+	const membersWithPostInfo = await Promise.all(promisesToGetPostInfo);
+	return membersWithPostInfo;
 }
