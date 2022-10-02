@@ -67,7 +67,9 @@ export async function getLatestPostData(ironmanPageLink) {
 
 	const participationDaySelector = 'body > div.container.index-top > div > div > div.board.leftside.profile-main > div.ir-profile-content > div.ir-profile-series > div.qa-list__info.qa-list__info--ironman.subscription-group > span:nth-child(1)';
 	const participationDayString = $(participationDaySelector).text().trim()
-	const participationDays = isCompleted || parseInt(participationDayString.match(/參賽天數[\D]*(\d+) 天/)[1]);
+	const participationDays =
+		isCompleted * 30 ||
+		parseInt(participationDayString.match(/參賽天數[\D]*(\d+) 天/)[1]);
 
 	const currentPageLatestDaySelector = 'body > div.container.index-top > div > div > div.board.leftside.profile-main > div.ir-profile-content > div:nth-last-child(1) > div.profile-list__content > div.ir-qa-list__status > span';
 	const currentPageLatestDayString = $(currentPageLatestDaySelector).text();
