@@ -9,7 +9,7 @@ const s3Client = new S3Client({
 
 
 export async function keepUploadingTeamData() {
-	const minutes = 5;
+	const minutes = 3;
 
 	console.log(`keep to upload data of ithelp teams for every ${minutes} minutes`);
 
@@ -21,17 +21,24 @@ export async function keepUploadingTeamData() {
 
 async function crawlAndUploadTeamData(teamIds) {
 	console.log(`Start to crawl teams: `, teamIds);
-	const promises = teamIds.map(async (teamId) => {
-		try {
-			const members = await getMembersWithPostInfo(teamId);
-			console.log(`Start to upload data of members for team ${teamId}`);
-			await uploadTeamData(teamId, { data: members });
-			console.log(`Uploaded, team: ${teamId}`);
-		} catch (error) {
-			console.error(`error: crawlAndUploadAllTeamData: teamId: ${teamId}`, error);
-		}
-	});
-	await Promise.all(promises);
+
+	const chunkSize = 5;
+	for (let i = 0; i < teamIds.length; i += chunkSize) {
+		const chunkTeamIds = teamIds.slice(i, i + chunkSize);
+		console.log(`Chunk teamIds: ${chunkTeamIds}`);
+		const promises = chunkTeamIds.map(async (teamId) => {
+			try {
+				const members = await getMembersWithPostInfo(teamId);
+				console.log(`Start to upload data of members for team ${teamId}`);
+				await uploadTeamData(teamId, { data: members });
+				console.log(`Uploaded, team: ${teamId}`);
+			} catch (error) {
+				console.error(`error: crawlAndUploadAllTeamData: teamId: ${teamId}`, error);
+			}
+		});
+		await Promise.all(promises);
+	}
+
 	console.log(`All team finished`);
 }
 
