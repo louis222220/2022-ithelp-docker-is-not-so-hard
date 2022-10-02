@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  ithelp-team-crawler-s3:
+    build: .
+    image: 'ithelp-team-crawler-s3'
+    restart: unless-stopped
+    env_file:
+      - .env
