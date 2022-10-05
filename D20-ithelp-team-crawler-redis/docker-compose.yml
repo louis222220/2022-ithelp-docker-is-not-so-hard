@@ -1,0 +1,11 @@
+version: "3"
+services:
+  redis:
+    image: redis
+  crawler:
+    build: .
+    # image: ithelp-team-crawler-redis
+    ports:
+      - 3000:3000
+    environment:
+      - REDIS_URL=redis://redis
