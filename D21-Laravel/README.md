@@ -11,7 +11,7 @@
 以下步驟都是在開發的電腦上執行，並注意以下的小細節：
 
 1. 已裝有 Docker Desktop。
-1. 如果需要 [Composer](https://getcomposer.org/)，可以自己進入 Container 安裝。
+1. 如果有需要除了 PHP 以外的環境，例如 [Composer](https://getcomposer.org/)，可以參考步驟 2.。
 
 ## 步驟
 
@@ -19,6 +19,12 @@
 
 	```bash
 	$ docker compose up -d
+	```
+
+1. 如果需要安裝 Composer 及相依套件：
+
+	```bash
+	$ docker compose exec php-container  bash install.sh
 	```
 
 2. 啟動 Laravel 的開發環境

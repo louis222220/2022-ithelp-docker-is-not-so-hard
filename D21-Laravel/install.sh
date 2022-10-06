@@ -4,4 +4,15 @@ php -r "if (hash_file('sha384', 'composer-setup.php') === '55ce33d7678c5a6110855
 php composer-setup.php
 php -r "unlink('composer-setup.php');"
 mv composer.phar /usr/local/bin/composer
+composer --version
 
+# Required by composer install
+apt-get update
+apt-get install git -y
+
+# Install dependency
+composer install
+
+# Generate secret key
+cp .env.example .env
+php artisan key:generate
