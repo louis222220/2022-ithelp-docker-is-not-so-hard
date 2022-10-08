@@ -1,0 +1,16 @@
+{
+  "name": "d08-ithelp-team-crawler",
+  "version": "1.0.0",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "Louis",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.1",
+    "mysql2": "^2.3.3",
+    "sequelize": "^6.24.0"
+  }
+}
