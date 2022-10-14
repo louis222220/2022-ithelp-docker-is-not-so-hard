@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  ithelp-team-crawler-s3:
+    build: .
+    image: 'ithelp-team-crawler-s3'
+    restart: unless-stopped
+    env_file:
+      - .env
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+        tag: crawler
+    extra_hosts:
+      - "localhost:host-gateway"
+
+  fluentd:
+    image: fluent/fluentd:edge-debian
+    volumes:
+      - ./fluentd.conf:/fluentd/etc/fluentd.conf
+    command: ["fluentd", "-c", "/fluentd/etc/fluentd.conf"]
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+
